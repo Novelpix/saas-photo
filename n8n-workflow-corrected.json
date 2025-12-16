@@ -1,0 +1,242 @@
+{
+  "name": "SAAS STUDIO PHOTO - CORRIGÉ",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-interior",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "e32c12e7-9163-4a50-b2f0-b318153b0d69",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [1760, -80],
+      "webhookId": "52b865d1-8ce9-40be-b252-a99bc4cb71c8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "imageData",
+              "value": "={{ $binary.image }}",
+              "type": "object"
+            },
+            {
+              "id": "2",
+              "name": "style",
+              "value": "={{ $json.body.style }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "intensity",
+              "value": "={{ $json.body.intensity }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "mobilier",
+              "value": "={{ $json.body.mobilier }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "description",
+              "value": "={{ $json.body.description }}",
+              "type": "string"
+            },
+            {
+              "id": "6",
+              "name": "renovate_walls",
+              "value": "={{ $json.body.renovate_walls }}",
+              "type": "string"
+            },
+            {
+              "id": "7",
+              "name": "change_floor",
+              "value": "={{ $json.body.change_floor }}",
+              "type": "string"
+            },
+            {
+              "id": "8",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "prep-data-node",
+      "name": "Préparer les données",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [1960, -80]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "gemini-1.5-flash",
+          "mode": "list",
+          "cachedResultName": "Gemini 1.5 Flash"
+        },
+        "prompt": "=Transforme cette photo d'intérieur vide en un intérieur meublé et décoré selon les spécifications suivantes :\n\n**Style demandé** : {{ $json.style }}\n**Intensité de transformation** (0-1) : {{ $json.intensity }}\n**Niveau de luxe du mobilier** : {{ $json.mobilier }}\n**Rénover les murs** : {{ $json.renovate_walls }}\n**Changer le sol** : {{ $json.change_floor }}\n**Instructions spéciales** : {{ $json.description }}\n\n⚠️ CONTRAINTES STRICTES :\n1. La géométrie de la pièce doit rester EXACTEMENT identique (mêmes murs, mêmes proportions, mêmes ouvertures)\n2. L'angle de vue et le point de vue de la caméra doivent être STRICTEMENT identiques\n3. Les portes et fenêtres doivent rester aux mêmes emplacements\n4. Seuls le mobilier, la décoration, les couleurs et les finitions changent\n5. La photo AVANT et la photo APRÈS doivent être parfaitement superposables\n6. Le résultat doit être impressionnant et montrer une vraie transformation vers le luxe {{ $json.style }}\n\nGénère une image photoréaliste de haute qualité.",
+        "options": {
+          "temperature": 0.7,
+          "maxOutputTokens": 8192
+        },
+        "inputBinary": "imageData"
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [2160, -80],
+      "id": "6acd23ab-b73a-4a05-aca2-afc1395d8f94",
+      "name": "Générer l'image avec Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "yMuQLoXU8VHmxLNU",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "image/png"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [2360, -80],
+      "id": "3136b0fa-a303-43fe-8e27-4b3f381ef758",
+      "name": "Renvoyer l'image"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Préparer les données').item.json.email }}",
+        "subject": "🏠 Votre transformation d'intérieur est prête !",
+        "message": "=Bonjour,\n\nVotre transformation d'intérieur avec NovelPix Studio est terminée ! ✨\n\n📋 **Détails de votre projet :**\n- Style : {{ $('Préparer les données').item.json.style }}\n- Niveau de luxe : {{ $('Préparer les données').item.json.mobilier }}\n- Intensité : {{ $('Préparer les données').item.json.intensity }}\n\nVous trouverez votre image transformée en pièce jointe.\n\nMerci d'utiliser NovelPix Studio - Révélez le potentiel de l'invisible ! 🎨\n\nL'équipe NovelPix",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "data"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [2560, -80],
+      "id": "33ca70df-3b3c-4859-8c36-b19e025ada69",
+      "name": "Envoyer par email",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UjipcL9WuagOSerz",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.error }}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2360, -280],
+      "id": "error-check-node",
+      "name": "Vérifier erreurs"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Préparer les données",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer les données": {
+      "main": [
+        [
+          {
+            "node": "Générer l'image avec Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Générer l'image avec Gemini": {
+      "main": [
+        [
+          {
+            "node": "Renvoyer l'image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renvoyer l'image": {
+      "main": [
+        [
+          {
+            "node": "Envoyer par email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "versionId": "corrected-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9c30ea3e76d04d1ddf3b2b1935efbc4ac69eca7619aa25b65aa59385e7a83200"
+  },
+  "id": "gYCEILOFKpQ8YxSU-corrected",
+  "tags": [
+    {
+      "name": "production"
+    }
+  ]
+}
