@@ -1,0 +1,26 @@
+{
+  "name": "novelpix-ai-studio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@react-three/drei": "9.105.6",
+    "@react-three/fiber": "8.16.6",
+    "lucide-react": "0.378.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.23.0",
+    "three": "0.164.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.1.2",
+    "typescript": "~5.8.2",
+    "vite": "^6.4.1"
+  }
+}
